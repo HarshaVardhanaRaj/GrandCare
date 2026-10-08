@@ -6,6 +6,12 @@
   <title>DoseDial — Caregiver Dashboard</title>
   <meta name="description" content="Caregiver dashboard showing real-time medication status and alerts for the senior's medication routine."/>
   <link rel="stylesheet" href="dashboard.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    }
+  </script>
 </head>
 <body>
 

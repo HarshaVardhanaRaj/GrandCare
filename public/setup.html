@@ -6,6 +6,12 @@
   <title>DoseDial — Setup</title>
   <meta name="description" content="Upload a prescription photo to extract medicines via AI and build a meal-aware medication schedule."/>
   <link rel="stylesheet" href="setup.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    }
+  </script>
 </head>
 <body>
 

@@ -6,6 +6,12 @@
   <title>DoseDial Watch</title>
   <meta name="description" content="Senior-friendly medication reminder watch UI with voice guidance and haptic feedback."/>
   <link rel="stylesheet" href="watch.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    }
+  </script>
 </head>
 <body>
 
