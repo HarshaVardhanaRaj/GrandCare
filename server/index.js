@@ -31,6 +31,15 @@ function freshState() {
     nudges:    [],          // caregiver messages queued for watch
     alerts:    [],          // missed / repeat / help alerts for dashboard
     adherence: { takenOnTime: 0, takenLate: 0, missed: 0 },
+    inventory: {
+      "Metformin 500mg": { remaining: 14, total: 30, unit: "tablets" },
+      "Lisinopril 10mg": { remaining: 3, total: 30, unit: "tablets" },
+      "Atorvastatin 20mg": { remaining: 20, total: 30, unit: "tablets" }
+    },
+    contacts: [
+      { id: "c1", name: "Dr. Sarah Jenkins", phone: "+1 (555) 234-5678", role: "Primary Caregiver", alertOnMissed: true },
+      { id: "c2", name: "Robert Miller", phone: "+1 (555) 987-6543", role: "Secondary Emergency Contact", alertOnMissed: false }
+    ],
     demo:      false,
     SOFT_AFTER:  5 * 60,   // seconds after due → soft reminder
     MISSED_AFTER: 20 * 60, // seconds after due → mark missed
@@ -167,7 +176,59 @@ app.post('/api/dose/:id/taken', (req, res) => {
     state.adherence.takenOnTime++;
   }
 
+  // Decrement inventory pill count
+  if (state.inventory[dose.medicineName]) {
+    const item = state.inventory[dose.medicineName];
+    if (item.remaining > 0) item.remaining--;
+    if (item.remaining <= 5) {
+      pushAlert({
+        type: 'low_inventory',
+        medicineName: dose.medicineName,
+        message: `⚠️ Low pill inventory alert: ${dose.medicineName} has only ${item.remaining} ${item.unit} remaining! Please order refill.`,
+      });
+    }
+  }
+
   res.json({ status: dose.status, dose });
+});
+
+// ── Inventory & Caregiver Contacts API ───────────────────────────────────────
+app.get('/api/inventory', (req, res) => {
+  res.json({ inventory: state.inventory });
+});
+
+app.post('/api/inventory/refill', (req, res) => {
+  const { medicineName, count = 30 } = req.body;
+  if (!medicineName) return res.status(400).json({ error: 'medicineName required' });
+  if (!state.inventory[medicineName]) {
+    state.inventory[medicineName] = { remaining: count, total: count, unit: 'tablets' };
+  } else {
+    state.inventory[medicineName].remaining += count;
+  }
+  pushAlert({
+    type: 'refill_success',
+    medicineName,
+    message: `📦 Refilled ${medicineName} (+${count} tablets). Current balance: ${state.inventory[medicineName].remaining}.`,
+  });
+  res.json({ status: 'ok', inventory: state.inventory[medicineName] });
+});
+
+app.get('/api/contacts', (req, res) => {
+  res.json({ contacts: state.contacts });
+});
+
+app.post('/api/alerts/send-sms', (req, res) => {
+  const { contactId, doseId, alertType } = req.body;
+  const contact = state.contacts.find(c => c.id === contactId) || state.contacts[0];
+  const alertMsg = `[DoseDial SMS Escalation] ALERT: Senior dose missed or SOS triggered! Dispatching SMS to ${contact.name} (${contact.phone}).`;
+  
+  pushAlert({
+    type: 'sms_escalation_sent',
+    message: alertMsg,
+    timestamp: new Date().toISOString(),
+  });
+  
+  res.json({ status: 'sent', recipient: contact.name, phone: contact.phone, message: alertMsg });
 });
 
 app.post('/api/dose/:id/later', (req, res) => {
