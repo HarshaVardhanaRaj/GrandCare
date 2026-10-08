@@ -1,0 +1,342 @@
+/* ── Watch UI CSS ─────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@700;800&display=swap');
+
+:root {
+  --watch-size: 360px;
+  --bg:         #000;
+  --surface:    #111;
+  --accent:     #6c63ff;
+  --accent2:    #00d4aa;
+  --green:      #22c55e;
+  --amber:      #f59e0b;
+  --red:        #ef4444;
+  --text:       #f0f0f8;
+  --muted:      #8888aa;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* ── Watch Shell ──────────────────────────────────────────────────── */
+.watch-shell {
+  position: relative;
+  width: var(--watch-size);
+  height: var(--watch-size);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 30% 30%, #1a1a2e, #000);
+  box-shadow:
+    0 0 0 3px #222,
+    0 0 0 6px #333,
+    0 0 60px rgba(108,99,255,0.3),
+    inset 0 0 40px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── Progress Ring ────────────────────────────────────────────────── */
+.progress-ring-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.ring-bg  { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
+.ring-bar {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease;
+}
+.ring-bar.complete { stroke: var(--accent2); filter: drop-shadow(0 0 6px var(--accent2)); }
+
+/* ── Inner content ────────────────────────────────────────────────── */
+.watch-inner {
+  position: relative;
+  z-index: 2;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+/* ── Clock ────────────────────────────────────────────────────────── */
+.watch-clock {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.15rem;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────── */
+.dose-card {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 0.5rem;
+  transition: all 0.3s;
+}
+.dose-card.due {
+  border-color: var(--amber);
+  background: rgba(245,158,11,0.08);
+  box-shadow: 0 0 20px rgba(245,158,11,0.15);
+}
+
+.card-med-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.card-strength {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+.card-food-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0;
+}
+.food-icon { font-size: 1.1rem; }
+.food-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.card-next-time {
+  font-size: 0.8rem;
+  color: var(--accent2);
+  font-weight: 600;
+}
+
+/* ── Progress text ────────────────────────────────────────────────── */
+.progress-text {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+.progress-text span { color: var(--green); font-weight: 700; }
+
+/* ── Buttons row ──────────────────────────────────────────────────── */
+.watch-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+.w-btn {
+  flex: 1;
+  padding: 0.55rem 0.2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.w-btn .w-btn-icon { font-size: 1.1rem; }
+.w-btn-taken  { background: rgba(34,197,94,0.2);  color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.w-btn-later  { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.w-btn-help   { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+.w-btn:hover  { transform: scale(1.05); filter: brightness(1.2); }
+.w-btn:active { transform: scale(0.96); }
+
+/* ── Status dots (history) ────────────────────────────────────────── */
+.status-dots {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.dot:hover { transform: scale(1.5); }
+.dot-taken  { background: var(--green); }
+.dot-taken-late { background: var(--amber); }
+.dot-missed { background: var(--red); }
+.dot-due    { background: var(--amber); animation: pulse-dot 1.5s infinite; }
+.dot-pending { background: #333; border: 1px solid #555; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Voice permission screen ──────────────────────────────────────── */
+.voice-gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  gap: 1.5rem;
+  text-align: center;
+  padding: 2rem;
+}
+.voice-gate h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  color: #fff;
+}
+.voice-gate p { color: #888; font-size: 0.9rem; }
+.tap-btn {
+  padding: 1.1rem 2.5rem;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  animation: pulse-ring 2s infinite;
+  font-family: 'Outfit', sans-serif;
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(108,99,255,0.5); }
+  70%  { box-shadow: 0 0 0 20px rgba(108,99,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(108,99,255,0); }
+}
+
+/* ── Nudge overlay ────────────────────────────────────────────────── */
+.nudge-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 800;
+  padding: 2rem;
+}
+.nudge-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(108,99,255,0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  max-width: 320px;
+  box-shadow: 0 0 40px rgba(108,99,255,0.2);
+}
+.nudge-card .nudge-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.nudge-card p { color: #ccc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem; }
+.nudge-ok-btn {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: #fff; border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ── Guard overlay (repeat dose) ──────────────────────────────────── */
+.guard-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 850; padding: 2rem;
+}
+.guard-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 20px;
+  padding: 2rem; text-align: center;
+  max-width: 300px;
+  box-shadow: 0 0 40px rgba(239,68,68,0.15);
+}
+.guard-card .guard-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.guard-card p { color: #ccc; font-size: 0.9rem; margin-bottom: 1.25rem; }
+.guard-btns { display: flex; gap: 0.75rem; justify-content: center; }
+.guard-yes {
+  background: var(--red); color: #fff; border: none;
+  padding: 0.6rem 1.5rem; border-radius: 50px;
+  font-weight: 700; cursor: pointer; font-size: 0.9rem;
+}
+.guard-no {
+  background: rgba(255,255,255,0.1); color: #ccc; border: none;
+  padding: 0.6rem 1.5rem; border-radius: 50px;
+  font-weight: 700; cursor: pointer; font-size: 0.9rem;
+}
+
+/* ── History tooltip ──────────────────────────────────────────────── */
+.history-panel {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 700; padding: 2rem;
+}
+.history-card {
+  background: #0f0f1a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  max-width: 320px; width: 100%;
+}
+.history-card h3 { font-family: 'Outfit', sans-serif; margin-bottom: 1rem; color: #fff; }
+.history-item { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+.history-item:last-child { border-bottom: none; }
+.history-close {
+  margin-top: 1rem; width: 100%;
+  background: rgba(255,255,255,0.08); color: #ccc;
+  border: none; border-radius: 50px; padding: 0.6rem;
+  cursor: pointer; font-size: 0.9rem;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+/* ── Demo badge ───────────────────────────────────────────────────── */
+.demo-badge {
+  position: fixed;
+  top: 10px; right: 10px;
+  background: rgba(245,158,11,0.2);
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  border-radius: 20px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  z-index: 50;
+}

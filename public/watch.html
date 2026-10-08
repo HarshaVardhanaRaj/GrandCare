@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DoseDial Watch</title>
+  <meta name="description" content="Senior-friendly medication reminder watch UI with voice guidance and haptic feedback."/>
+  <link rel="stylesheet" href="watch.css"/>
+</head>
+<body>
+
+<!-- Voice gate — browser requires user gesture before audio -->
+<div class="voice-gate" id="voiceGate">
+  <div style="font-size:3rem">⌚</div>
+  <h2>DoseDial Watch</h2>
+  <p>Tap to enable voice reminders<br/>and haptic alerts</p>
+  <button class="tap-btn" id="enableVoiceBtn">Tap to Enable Voice</button>
+  <p style="font-size:0.75rem;margin-top:1rem;color:#555">Reminder tool only. Always follow your doctor's advice.</p>
+</div>
+
+<!-- Demo badge -->
+<div class="demo-badge hidden" id="demoBadge">⚡ DEMO MODE</div>
+
+<!-- Nudge overlay -->
+<div class="nudge-overlay hidden" id="nudgeOverlay">
+  <div class="nudge-card">
+    <div class="nudge-icon">💙</div>
+    <p id="nudgeMsg">Your family is thinking of you.</p>
+    <button class="nudge-ok-btn" id="nudgeOkBtn">I'm doing well, thanks!</button>
+  </div>
+</div>
+
+<!-- Guard overlay (repeat dose) -->
+<div class="guard-overlay hidden" id="guardOverlay">
+  <div class="guard-card">
+    <div class="guard-icon">⚠️</div>
+    <p id="guardMsg">You already took this medicine. Take again?</p>
+    <div class="guard-btns">
+      <button class="guard-yes" id="guardYes">Yes, take again</button>
+      <button class="guard-no"  id="guardNo">No, cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- History panel -->
+<div class="history-panel hidden" id="historyPanel">
+  <div class="history-card">
+    <h3>Today's Medicines</h3>
+    <div id="historyList"></div>
+    <button class="history-close" id="historyClose">Close</button>
+  </div>
+</div>
+
+<!-- Watch -->
+<div class="watch-shell" id="watchShell">
+  <!-- Progress ring SVG -->
+  <svg class="progress-ring-svg" viewBox="0 0 360 360">
+    <circle class="ring-bg" cx="180" cy="180" r="172"/>
+    <circle class="ring-bar" id="ringBar" cx="180" cy="180" r="172"
+      stroke-dasharray="1081" stroke-dashoffset="1081"
+      transform="rotate(-90 180 180)"/>
+  </svg>
+
+  <!-- Inner content -->
+  <div class="watch-inner">
+    <div class="watch-clock" id="watchClock">--:--</div>
+
+    <!-- Dose card -->
+    <div class="dose-card" id="doseCard">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">✅</div>
+        <div>All done for now!</div>
+        <div style="font-size:0.7rem;margin-top:0.3rem">Tap ring to check history</div>
+      </div>
+      <div id="cardContent" class="hidden">
+        <div class="card-med-name" id="cardName">—</div>
+        <div class="card-strength" id="cardStrength">—</div>
+        <div class="card-food-row">
+          <span class="food-icon" id="foodIcon">🍽️</span>
+          <span class="food-label" id="foodLabel">—</span>
+        </div>
+        <div class="card-next-time" id="cardTime">—</div>
+      </div>
+    </div>
+
+    <!-- Progress text -->
+    <div class="progress-text"><span id="doneCount">0</span> of <span id="totalCount">0</span> done today</div>
+
+    <!-- Status dots (clickable ring tap = history) -->
+    <div class="status-dots" id="statusDots"></div>
+
+    <!-- Action buttons -->
+    <div class="watch-actions" id="watchActions">
+      <button class="w-btn w-btn-taken" id="btnTaken">
+        <span class="w-btn-icon">✅</span>
+        <span>Taken</span>
+      </button>
+      <button class="w-btn w-btn-later" id="btnLater">
+        <span class="w-btn-icon">⏰</span>
+        <span>Later</span>
+      </button>
+      <button class="w-btn w-btn-help" id="btnHelp">
+        <span class="w-btn-icon">🆘</span>
+        <span>Help</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="watch.js"></script>
+</body>
+</html>
