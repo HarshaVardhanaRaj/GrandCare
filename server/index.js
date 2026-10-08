@@ -41,6 +41,7 @@ function freshState() {
       { id: "c1", name: "Dr. Sarah Jenkins", phone: "+1 (555) 234-5678", role: "Primary Caregiver", alertOnMissed: true },
       { id: "c2", name: "Robert Miller", phone: "+1 (555) 987-6543", role: "Secondary Emergency Contact", alertOnMissed: false }
     ],
+    language:  "en",
     demo:      false,
     SOFT_AFTER:  5 * 60,   // seconds after due → soft reminder
     MISSED_AFTER: 20 * 60, // seconds after due → mark missed
@@ -351,6 +352,20 @@ app.get('/api/export-ical', (req, res) => {
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="dosedial-schedule.ics"');
   res.send(icsData);
+});
+
+// ── Regional Languages API ───────────────────────────────────────────────────
+const languages = require('./languages.json');
+
+app.get('/api/languages', (req, res) => {
+  res.json({ languages, current: state.language });
+});
+
+app.post('/api/language', (req, res) => {
+  const { code } = req.body;
+  if (!languages[code]) return res.status(400).json({ error: 'Unsupported language code' });
+  state.language = code;
+  res.json({ status: 'ok', language: code, translations: languages[code] });
 });
 
 // ── Start server ──────────────────────────────────────────────────────────────

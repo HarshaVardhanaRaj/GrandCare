@@ -49,12 +49,30 @@ const btnLater      = document.getElementById('btnLater');
 const btnHelp       = document.getElementById('btnHelp');
 
 // ── Voice gate ────────────────────────────────────────────────────────────────
+const langSelect = document.getElementById('langSelect');
+let currentLangCode = 'en';
+
+if (langSelect) {
+  langSelect.addEventListener('change', async () => {
+    currentLangCode = langSelect.value;
+    try {
+      await fetch('/api/language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: currentLangCode })
+      });
+    } catch(e) {}
+  });
+}
+
 enableVoiceBtn.addEventListener('click', () => {
   voiceEnabled = true;
   voiceGate.style.display = 'none';
   // Unlock audio context
-  const u = new SpeechSynthesisUtterance('DoseDial ready.');
-  u.volume = 0.01;
+  const readyMsg = currentLangCode === 'hi' ? 'दवा घड़ी तैयार है' : (currentLangCode === 'es' ? 'DoseDial listo' : (currentLangCode === 'ta' ? 'மருந்து கடிகாரம் தயார்' : 'DoseDial ready'));
+  const u = new SpeechSynthesisUtterance(readyMsg);
+  u.volume = 0.5;
+  u.rate = 0.85;
   speechSynthesis.speak(u);
   startPolling();
 });
