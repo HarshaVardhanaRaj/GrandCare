@@ -1,0 +1,34 @@
+{
+  "medicines": [
+    {
+      "name": "Metformin",
+      "strength": "500 mg",
+      "dose": "1 tablet",
+      "frequency_per_day": 2,
+      "instruction": "after_food",
+      "duration_days": 30,
+      "notes": "Take with water",
+      "confidence": 0.98
+    },
+    {
+      "name": "Amlodipine",
+      "strength": "5 mg",
+      "dose": "1 tablet",
+      "frequency_per_day": 1,
+      "instruction": "before_food",
+      "duration_days": 30,
+      "notes": "Morning dose preferred",
+      "confidence": 0.97
+    },
+    {
+      "name": "Vitamin D3",
+      "strength": "60000 IU",
+      "dose": "1 sachet",
+      "frequency_per_day": 1,
+      "instruction": "with_food",
+      "duration_days": 56,
+      "notes": "Weekly — take once a week",
+      "confidence": 0.95
+    }
+  ]
+}
