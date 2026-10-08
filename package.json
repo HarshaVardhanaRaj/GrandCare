@@ -1,29 +1,14 @@
 {
-  "name": "grandcare",
+  "name": "grandcare-prototype",
   "version": "1.0.0",
-  "description": "> **A smartwatch-first medication companion for seniors and their caregivers.**",
-  "main": "server/index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node server/index.js",
-    "test": "node server/test-scheduler.js && node server/test-integration.js",
-    "test:integration": "node server/test-integration.js"
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/HarshaVardhanaRaj/GrandCare.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/HarshaVardhanaRaj/GrandCare/issues"
-  },
-  "homepage": "https://github.com/HarshaVardhanaRaj/GrandCare#readme",
-  "dependencies": {
-    "@google/genai": "^2.28.0",
-    "dotenv": "^18.0.6",
-    "express": "^5.2.1",
-    "multer": "^2.4.0"
+  "engines": {
+    "node": ">=20"
   }
 }

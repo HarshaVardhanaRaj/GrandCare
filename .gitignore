@@ -1,5 +1,8 @@
+.ocr-deps/
+.ocr-deps/
 node_modules/
+eng.traineddata
 .env
 *.log
-.DS_Store
-uploads/
+data/store.json
+data/prescriptions/

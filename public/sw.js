@@ -1,60 +1,49 @@
-/**
- * sw.js — Service Worker for DoseDial Offline PWA Support
- * Caches static shell files for Wear OS offline execution.
- */
-
-const CACHE_NAME = 'dosedial-v1';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'grandcare-shell-v17';
+const SHELL_FILES = [
   '/',
-  '/watch.html',
-  '/watch.css',
-  '/watch.js',
-  '/setup.html',
-  '/setup.css',
-  '/setup.js',
-  '/dashboard.html',
-  '/dashboard.css',
-  '/dashboard.js',
-  '/style.css',
-  '/demo-dock.css',
-  '/demo-dock.js',
-  '/manifest.json'
+  '/styles.css?v=10',
+  '/app.js?v=16',
+  '/manifest.json',
+  '/icons/grandcare.svg',
+  '/icons/grandcare-192.png',
+  '/icons/grandcare-512.png',
+  '/medication-guide-tablet.gif?v=2',
+  '/medication-guide-tablet.png?v=2'
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
-  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      )
-    )
-  );
-  self.clients.claim();
+  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('grandcare-shell-') && key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for static assets, bypass API calls to live server
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) return;
+  const request = event.request;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/vendor/')) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() => {
-          if (event.request.headers.get('accept').includes('text/html')) {
-            return caches.match('/watch.html');
-          }
-        })
-      );
-    })
-  );
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response.ok) await (await caches.open(CACHE_NAME)).put('/', response.clone());
+        return response;
+      } catch { return (await caches.match('/')) || Response.error(); }
+    })());
+    return;
+  }
+
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    try {
+      const response = await fetch(request);
+      if (response.ok) await (await caches.open(CACHE_NAME)).put(request, response.clone());
+      return response;
+    } catch (error) {
+      if (cached) return cached;
+      throw error;
+    }
+  })());
 });

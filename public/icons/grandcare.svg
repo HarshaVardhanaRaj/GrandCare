@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">GrandCare heart and medicine capsule</title>
+  <rect width="512" height="512" rx="112" fill="#317d68"/>
+  <path fill="#fff" d="M256 421C216 385 82 286 82 177c0-78 84-117 149-70 13 9 21 20 25 29 4-9 12-20 25-29 65-47 149-8 149 70 0 109-134 208-174 244Z"/>
+  <g transform="rotate(-45 256 256)">
+    <rect x="189" y="222" width="134" height="68" rx="34" fill="#dcefe4"/>
+    <path d="M256 224v64" fill="none" stroke="#317d68" stroke-linecap="round" stroke-width="8"/>
+  </g>
+</svg>
