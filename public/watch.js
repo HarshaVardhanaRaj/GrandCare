@@ -157,6 +157,7 @@ function render(newState) {
       if (lastSpokenId !== active.id) {
         lastSpokenId = active.id;
         const txt = `Time for your ${active.medicineName}, ${active.dose}, ${foodLabelFor(active.foodRule)}`;
+        playChime();
         speak(txt);
         vibrate([200, 100, 200]);
       }
@@ -164,6 +165,7 @@ function render(newState) {
       // Soft reminder
       if (active.softReminder && lastSpokenId !== `soft-${active.id}`) {
         lastSpokenId = `soft-${active.id}`;
+        playChime();
         speak(`Gentle reminder: ${active.medicineName} is waiting for you.`);
         vibrate([100]);
       }
@@ -293,3 +295,36 @@ document.getElementById('watchShell').addEventListener('click', (e) => {
   const dist  = Math.sqrt((e.clientX - cx) ** 2 + (e.clientY - cy) ** 2);
   if (dist > 120) showHistory(state.doses || []);
 });
+
+// ── Web Audio Synthesizer for Watch Chime ─────────────────────────────────────
+function playChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    // Dual-tone chime
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.frequency.setValueAtTime(659.25, now); // E5
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.4);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.frequency.setValueAtTime(987.77, now + 0.15); // B5
+    gain2.gain.setValueAtTime(0.2, now + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.15);
+    osc2.stop(now + 0.65);
+  } catch (e) {
+    console.log('Web Audio chime not supported', e);
+  }
+}
