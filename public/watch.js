@@ -96,7 +96,11 @@ function speak(text) {
   if (!voiceEnabled) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.9; u.pitch = 1.05;
+  u.rate = 0.85; // Senior-friendly slower speaking rate
+  u.pitch = 1.05;
+  const voices = speechSynthesis.getVoices();
+  const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Karen')));
+  if (naturalVoice) u.voice = naturalVoice;
   speechSynthesis.speak(u);
 }
 
