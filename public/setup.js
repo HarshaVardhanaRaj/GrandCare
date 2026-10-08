@@ -226,3 +226,28 @@ function renderSchedulePreview(doses) {
     `;
   }).join('');
 }
+
+// ── Preset loader ─────────────────────────────────────────────────────────────
+async function loadPreset(presetId) {
+  try {
+    extractStatus.className = 'extract-status info';
+    extractStatus.textContent = '⏳ Loading prescription preset...';
+    extractStatus.classList.remove('hidden');
+    const res = await fetch(`/api/presets/${presetId}/load`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load preset');
+
+    extractedMedicines = data.preset.medicines;
+    renderMedicineTable();
+    reviewCard.classList.remove('hidden');
+    mealCard.classList.remove('hidden');
+    previewCard.classList.remove('hidden');
+    renderSchedulePreview(data.doses);
+
+    extractStatus.className = 'extract-status success';
+    extractStatus.textContent = `✅ Loaded preset "${data.preset.title}" successfully! ${data.doses.length} dose reminders scheduled below.`;
+  } catch (err) {
+    extractStatus.className = 'extract-status error';
+    extractStatus.textContent = '❌ Error: ' + err.message;
+  }
+}

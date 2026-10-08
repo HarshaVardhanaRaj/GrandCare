@@ -57,6 +57,13 @@
         🚀 Start 2-Minute Demo
       </button>
     </div>
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <p style="font-size:0.8rem; color:#888; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Presets for Instant Demo:</p>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn btn-demo" onclick="loadPreset('cardiac_diabetes')" style="font-size:0.8rem; padding:0.4rem 0.8rem;">❤️ Cardiac &amp; Diabetes Preset</button>
+        <button class="btn btn-demo" onclick="loadPreset('post_stroke')" style="font-size:0.8rem; padding:0.4rem 0.8rem;">🧠 Post-Stroke Preset</button>
+      </div>
+    </div>
     <div class="extract-status hidden" id="extractStatus"></div>
   </div>
 
@@ -137,5 +144,6 @@
 <footer class="footer">⚠️ Reminder tool only. Always follow your doctor's advice. | DoseDial v1.0</footer>
 
 <script src="setup.js"></script>
+<script src="demo-dock.js"></script>
 </body>
 </html>
