@@ -83,8 +83,8 @@ function buildSchedule(medicines, meals) {
   const doses = [];
 
   for (const med of medicines) {
-    const freq = Number(med.frequency_per_day) || 1;
-    const rule = instructionToRule(med.instruction);
+    const freq = Number(med.frequency_per_day) || (med.instructions && med.instructions.toLowerCase().includes('twice') ? 2 : 1);
+    const rule = med.foodRule || med.timing_code || instructionToRule(med.instruction || med.instructions);
     const anchors = pickMealAnchors(freq, rule, meals);
 
     for (const anchor of anchors) {

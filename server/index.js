@@ -136,6 +136,8 @@ app.get('/api/state', (_req, res) => {
     nudges:    state.nudges,
     alerts:    state.alerts,
     adherence: state.adherence,
+    inventory: state.inventory,
+    contacts:  state.contacts,
     demo:      state.demo,
   });
 });

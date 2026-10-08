@@ -5,7 +5,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "test": "node server/test-scheduler.js"
+    "test": "node server/test-scheduler.js && node server/test-integration.js",
+    "test:integration": "node server/test-integration.js"
   },
   "repository": {
     "type": "git",
