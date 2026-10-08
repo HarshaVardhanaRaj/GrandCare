@@ -11,6 +11,7 @@ const path    = require('path');
 
 const { buildSchedule, resetIdCounter } = require('./scheduler');
 const { handleExtract } = require('./extract');
+const { generateICS } = require('./ical');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -342,6 +343,14 @@ app.post('/api/presets/:id/load', (req, res) => {
     timestamp: new Date().toISOString(),
   });
   res.json({ status: 'ok', preset, doses: state.doses });
+});
+
+// ── Calendar Export API ───────────────────────────────────────────────────────
+app.get('/api/export-ical', (req, res) => {
+  const icsData = generateICS(state.doses || []);
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="dosedial-schedule.ics"');
+  res.send(icsData);
 });
 
 // ── Start server ──────────────────────────────────────────────────────────────
