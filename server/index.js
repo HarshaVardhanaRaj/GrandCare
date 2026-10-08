@@ -262,6 +262,27 @@ app.post('/api/demo/start', (req, res) => {
   res.json({ status: 'demo_started', doses: state.doses });
 });
 
+
+// ── Presets API ────────────────────────────────────────────────────────────────
+const presets = require('./presets.json');
+
+app.get('/api/presets', (req, res) => {
+  res.json({ presets });
+});
+
+app.post('/api/presets/:id/load', (req, res) => {
+  const preset = presets.find(p => p.id === req.params.id);
+  if (!preset) return res.status(404).json({ error: 'Preset not found' });
+  const scheduledDoses = buildSchedule(preset.medicines, state.meals);
+  state.doses = scheduledDoses;
+  state.alerts.unshift({
+    type: 'preset_loaded',
+    text: `Loaded prescription preset: "${preset.title}" (${preset.medicines.length} meds scheduled)`,
+    timestamp: new Date().toISOString(),
+  });
+  res.json({ status: 'ok', preset, doses: state.doses });
+});
+
 // ── Start server ──────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   const ifaces = os.networkInterfaces();
