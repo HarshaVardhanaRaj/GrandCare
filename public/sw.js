@@ -1,8 +1,9 @@
-const CACHE_NAME = 'grandcare-shell-v17';
+const CACHE_NAME = 'grandcare-shell-v18';
 const SHELL_FILES = [
   '/',
-  '/styles.css?v=10',
-  '/app.js?v=16',
+  '/styles.css?v=11',
+  '/app.js?v=17',
+  '/i18n.js',
   '/manifest.json',
   '/icons/grandcare.svg',
   '/icons/grandcare-192.png',

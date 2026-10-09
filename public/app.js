@@ -1,6 +1,8 @@
+import { applyTranslations, languages, localeFor, readLanguage, saveLanguage, speechLocaleFor, translateText } from './i18n.js';
+
 const root = document.querySelector('#app');
 const toastRegion = document.querySelector('#toast-region');
-const state = { user: null, data: null, page: 'dashboard', role: 'caregiver', loginError: '', loading: false, watchOpen: false, activeDoseId: null, modal: null, polling: null, lastStates: new Map(), online: navigator.onLine, prescriptions: [], prescriptionsLoading: false, scanBusy: false, scanStatus: '', installPrompt: null };
+const state = { user: null, data: null, page: 'dashboard', role: 'caregiver', language: readLanguage(), loginError: '', loading: false, watchOpen: false, activeDoseId: null, modal: null, polling: null, lastStates: new Map(), online: navigator.onLine, prescriptions: [], prescriptionsLoading: false, scanBusy: false, scanStatus: '', installPrompt: null };
 const PENDING_KEY = 'caremate.pendingActions.v1';
 const LOCAL_PRESCRIPTION_DB = 'grandcare.local-prescriptions.v1';
 function readPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); } catch { return []; } }
@@ -11,11 +13,11 @@ const esc = (value = '') => String(value).replace(/[&<>"']/g, (ch) => ({ '&': '&
 const time = (value) => {
   if (!value) return '—';
   const [h, m] = String(value).split(':').map(Number);
-  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+  return new Intl.DateTimeFormat(localeFor(state.language), { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(Date.UTC(2026, 0, 1, h - 5, m - 30)));
 };
 const todayKey = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const dateShort = (value) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(value));
-const stamp = (value) => value ? new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(value)) : '';
+const dateShort = (value) => new Intl.DateTimeFormat(localeFor(state.language), { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(value));
+const stamp = (value) => value ? new Intl.DateTimeFormat(localeFor(state.language), { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(value)) : '';
 const initials = (name = '') => name.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 const greeting = () => { const hour = Number(new Intl.DateTimeFormat('en-IN', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Kolkata' }).format(new Date())); return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'; };
 const mealOptions = ['Before breakfast', 'With breakfast', 'After breakfast', 'Before lunch', 'With lunch', 'After lunch', 'Before dinner', 'With dinner', 'After dinner', 'Before bed', 'Custom time'];
@@ -30,7 +32,7 @@ async function api(url, options = {}) {
   return payload;
 }
 function toast(message, kind = 'ok') {
-  const node = document.createElement('div'); node.className = `toast${kind === 'error' ? ' error' : ''}`; node.textContent = message; toastRegion.append(node); setTimeout(() => node.remove(), 3600);
+  const node = document.createElement('div'); node.className = `toast${kind === 'error' ? ' error' : ''}`; node.textContent = translateText(message, state.language); toastRegion.append(node); setTimeout(() => node.remove(), 3600);
 }
 function setLoading(value) { state.loading = value; }
 function loginScreen() {
@@ -38,11 +40,12 @@ function loginScreen() {
     <section class="login-aside"><div class="brand"><img class="brand-mark" src="./icons/grandcare.svg" alt="" aria-hidden="true"><div class="brand-name">GrandCare<small>Live long, live free</small></div></div>
       <div class="login-message"><div class="eyebrow">Medication support, with heart</div><h1>Confidence in every <em>little moment.</em></h1><p>A calm companion for daily medication routines, with a thoughtful safety net for the people who care.</p><div class="principle-row"><span>◉ Patient first</span><span>♡ Gentle reminders</span><span>⌁ Support when needed</span></div></div>
       <div class="login-foot">A prototype for more confident, independent care.</div></section>
-    <section class="login-main"><div class="login-card"><div class="eyebrow">Welcome to GrandCare</div><h2>Sign in to continue</h2><p>Choose your experience. Demo accounts are ready to explore.</p>
+    <section class="login-main"><div class="login-card"><div class="field language-field"><label for="app-language">Language</label><select id="app-language" aria-label="Language">${languages.map((language) => `<option value="${language.code}" ${state.language === language.code ? 'selected' : ''}>${language.name}</option>`).join('')}</select></div><div class="eyebrow">Welcome to GrandCare</div><h2>Sign in to continue</h2><p>Choose your experience. Demo accounts are ready to explore.</p>
       <div class="role-switch" role="tablist"><button class="role-option ${state.role === 'caregiver' ? 'active' : ''}" data-action="select-role" data-role="caregiver" role="tab" aria-selected="${state.role === 'caregiver'}">Caregiver</button><button class="role-option ${state.role === 'patient' ? 'active' : ''}" data-action="select-role" data-role="patient" role="tab" aria-selected="${state.role === 'patient'}">Patient</button></div>
       <form id="login-form" class="login-form"><div class="field"><label for="login-email">Email address</label><input id="login-email" name="email" type="email" autocomplete="username" required placeholder="name@example.com" value="${state.role === 'caregiver' ? 'caregiver@caremate.demo' : 'patient@caremate.demo'}"></div><div class="field"><label for="login-password">Password</label><input id="login-password" name="password" type="password" autocomplete="current-password" required value="caremate123"></div><div id="login-error" class="login-error ${state.loginError ? 'show' : ''}">${esc(state.loginError)}</div><button class="btn btn-primary" type="submit">Sign in <span>→</span></button></form>
       <div class="demo-login"><div class="demo-login-label">Quick demo access</div><div class="demo-account" data-action="quick-login" data-role="caregiver"><div class="avatar">AK</div><div class="demo-account-copy"><strong>Anita Kumar</strong><span>Caregiver · Daughter</span></div><span class="demo-arrow">→</span></div><div class="demo-account" data-action="quick-login" data-role="patient"><div class="avatar">RK</div><div class="demo-account-copy"><strong>Ravi Kumar</strong><span>Patient · Independent routine</span></div><span class="demo-arrow">→</span></div></div>
       ${state.installPrompt ? '<button class="btn btn-secondary install-app-cta" data-action="install-app">Install GrandCare on this device</button>' : ''}<div class="disclaimer">Prototype only. Not a medical device and not a substitute for professional medical advice.</div></div></section></main>`;
+  applyTranslations(root, state.language);
 }
 function navItems() {
   return state.user.role === 'caregiver'
@@ -50,7 +53,7 @@ function navItems() {
     : [['home', '⌂', 'Home'], ['medications', '▤', 'Medicines'], ['prescriptions', '▧', 'Prescriptions'], ['history', '◷', 'History'], ['help', '♡', 'Help']];
 }
 function currentDateTime() {
-  return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })
+  return new Intl.DateTimeFormat(localeFor(state.language), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })
     .format(new Date()).replace(/\b(am|pm)\b/i, (period) => period.toUpperCase());
 }
 function titleFor(page) {
@@ -66,6 +69,7 @@ function shell(content) {
   const alerts = state.data?.alerts || [];
   root.innerHTML = `<div class="app-shell ${state.user.role === 'patient' ? 'patient-app' : 'caregiver-app'}"><aside class="sidebar"><div class="brand"><img class="brand-mark" src="./icons/grandcare.svg" alt="" aria-hidden="true"><div class="brand-name">GrandCare<small>Live long, live free</small></div></div><div><div class="nav-label">${state.user.role === 'caregiver' ? 'Care space' : 'My routine'}</div><nav class="nav-list">${navItems().map(([key, icon, label]) => `<button class="nav-item ${state.page === key ? 'active' : ''}" data-action="navigate" data-page="${key}">${navIcon(icon)}<span>${label}</span>${key === 'alerts' && alerts.length ? `<span class="nav-count">${alerts.length}</span>` : ''}</button>`).join('')}</nav></div><div class="side-bottom"><div class="profile-mini"><div class="avatar">${initials(state.user.name)}</div><div class="profile-copy"><strong>${esc(state.user.name)}</strong><span>${state.user.role === 'caregiver' ? 'Caregiver' : 'Patient'} account</span></div><button class="profile-menu" data-action="logout" title="Sign out" aria-label="Sign out">↪</button></div></div></aside>
     <section class="main-area"><header class="topbar"><div><div class="topbar-title">${esc(titleFor(state.page))}</div><div class="topbar-sub">${state.user.role === 'caregiver' ? 'Ravi Kumar · Connected care' : `${greeting()}, Ravi`}</div></div><div class="topbar-space"></div>${state.installPrompt ? '<button class="install-app-button" data-action="install-app" aria-label="Install GrandCare">⇩ <span>Install</span></button>' : ''}${state.online ? '<span class="connection"><i></i>Synced</span>' : `<span class="offline">● ${pendingActions.length ? `${pendingActions.length} saved · waiting to sync` : 'Waiting to sync'}</span>`}<button class="icon-button" data-action="toggle-watch" title="Open watch simulator" aria-label="Open watch simulator">◌<i class="live-dot"></i></button><button class="icon-button" data-action="navigate" data-page="${state.user.role === 'caregiver' ? 'alerts' : 'help'}" title="Support" aria-label="Support">♡</button><button class="avatar topbar-signout" data-action="logout" title="Sign out" aria-label="Sign out of GrandCare">${initials(state.user.name)}</button></header><main class="main-content">${content}</main></section></div>${state.watchOpen ? renderWatch() : ''}${state.modal ? renderModal() : ''}`;
+  applyTranslations(root, state.language);
 }
 function statCard(label, value, note, glyph, color = '') { return `<article class="card stat-card"><div class="stat-head"><span>${label}</span><span class="stat-glyph">${glyph}</span></div><div class="stat-value ${color}">${value}</div><div class="stat-note">${note}</div></article>`; }
 function patientBanner() {
@@ -77,7 +81,7 @@ function doseRow(d) {
 }
 function chartMarkup() {
   const trend = state.data.trend;
-  return `<div class="chart" role="img" aria-label="Daily on-time confirmation trend">${trend.map((item, idx) => `<div class="chart-col ${idx === trend.length - 1 ? 'today' : ''}"><span class="chart-value">${item.value}%</span><div class="chart-bar" style="height:${Math.max(8, item.value)}%"></div><span class="chart-label">${idx === trend.length - 1 ? 'Today' : new Intl.DateTimeFormat('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(`${item.date}T12:00:00+05:30`))}</span></div>`).join('')}</div><div class="chart-legend"><span><i class="legend-dot"></i>On-time confirmations</span><span>Last 7 days</span></div>`;
+  return `<div class="chart" role="img" aria-label="Daily on-time confirmation trend">${trend.map((item, idx) => `<div class="chart-col ${idx === trend.length - 1 ? 'today' : ''}"><span class="chart-value">${item.value}%</span><div class="chart-bar" style="height:${Math.max(8, item.value)}%"></div><span class="chart-label">${idx === trend.length - 1 ? 'Today' : new Intl.DateTimeFormat(localeFor(state.language), { weekday: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(`${item.date}T12:00:00+05:30`))}</span></div>`).join('')}</div><div class="chart-legend"><span><i class="legend-dot"></i>On-time confirmations</span><span>Last 7 days</span></div>`;
 }
 function eventTimeline(events = state.data.events) {
   if (!events.length) return `<div class="empty-state"><div class="empty-icon">◷</div><strong>No activity recorded yet</strong>Medication activity will appear here.</div>`;
@@ -117,7 +121,7 @@ function prescriptionsPage() {
 }
 function setScanStatus(message) {
   state.scanStatus = message;
-  const status = document.querySelector('#ocr-status'); if (status) status.textContent = message;
+  const status = document.querySelector('#ocr-status'); if (status) status.textContent = translateText(message, state.language);
 }
 async function loadPrescriptions() {
   if (state.user?.role !== 'patient') return;
@@ -259,7 +263,7 @@ async function submitPrescription(form) {
   }
 }
 async function deletePrescription(prescriptionId) {
-  if (!confirm('Remove this prescription and its saved scan?')) return;
+  if (!confirm(translateText('Remove this prescription and its saved scan?', state.language))) return;
   try { if (state.prescriptions.find((item) => item.id === prescriptionId)?.local) await removeLocalPrescription(prescriptionId); else await api(`/api/prescriptions/${encodeURIComponent(prescriptionId)}`, { method: 'DELETE' }); state.prescriptions = state.prescriptions.filter((item) => item.id !== prescriptionId); render(); toast('Prescription removed.'); }
   catch (error) { toast(error.message, 'error'); }
 }
@@ -288,6 +292,18 @@ function voiceText(dose) {
   const takeDirections = repeatedWaterInstruction
     ? `Please take ${quantity}${timing}, with water.`
     : `Please take ${quantity}${timing}.${instructions ? ` ${instructions}` : ''}`;
+  if (state.language === 'ta') {
+    const greetingTa = h < 12 ? 'காலை வணக்கம்' : h < 17 ? 'மதிய வணக்கம்' : 'மாலை வணக்கம்';
+    return `${greetingTa}, ${name}. இப்போது ${dose.medicationName}${dosage ? `, ${dosage}` : ''} எடுத்துக்கொள்ளும் நேரம். ${translateText(quantity, 'ta')}${timing ? ` ${translateText(spokenRelation, 'ta')}` : ''}${repeatedWaterInstruction ? ' தண்ணீருடன்' : ''} எடுத்துக்கொள்ளுங்கள்.${instructions && !repeatedWaterInstruction ? ` ${instructions}` : ''} மெதுவாக எடுத்துக்கொள்ளுங்கள். அவசரமில்லை.`;
+  }
+  if (state.language === 'hi') {
+    const greetingHi = h < 12 ? 'सुप्रभात' : h < 17 ? 'नमस्कार' : 'शुभ संध्या';
+    return `${greetingHi}, ${name}. अब ${dose.medicationName}${dosage ? `, ${dosage}` : ''} लेने का समय है। ${translateText(quantity, 'hi')}${timing ? ` ${translateText(spokenRelation, 'hi')}` : ''}${repeatedWaterInstruction ? ' पानी के साथ' : ''} लें।${instructions && !repeatedWaterInstruction ? ` ${instructions}` : ''} आराम से लें, कोई जल्दी नहीं है।`;
+  }
+  if (state.language === 'es') {
+    const greetingEs = h < 12 ? 'Buenos días' : h < 17 ? 'Buenas tardes' : 'Buenas noches';
+    return `${greetingEs}, ${name}. Es hora de ${dose.medicationName}${dosage ? `, ${dosage}` : ''}. Tome ${translateText(quantity, 'es')}${timing ? ` ${translateText(spokenRelation, 'es')}` : ''}${repeatedWaterInstruction ? ' con agua' : ''}.${instructions && !repeatedWaterInstruction ? ` ${instructions}` : ''} Tómese su tiempo, no hay prisa.`;
+  }
   return `${hello}, ${name}. It is time for ${dose.medicationName}${dosage ? `, ${dosage}` : ''}. ${takeDirections} Take your time. There is no rush.`;
 }
 function patientHome() {
@@ -339,7 +355,7 @@ function helpPage() {
 function renderWatch() {
   const d = patientCurrentDose();
   const active = d && ['DUE','SNOOZED','CAREGIVER_NOTIFIED','HELP_REQUESTED'].includes(d.state);
-  return `<div class="watch-overlay" data-action="close-watch"><section class="watch-panel" role="dialog" aria-label="Patient smartwatch simulator" data-watch-panel><div class="watch-top"><span>◌ PATIENT WATCH</span><button class="close-button" data-action="close-watch" aria-label="Close watch">×</button></div><div class="watch-face"><div class="watch-time">${new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date())}</div><div class="watch-date">${new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date())}</div>${d ? `<div class="watch-kicker">${active ? 'MEDICATION DUE' : 'NEXT MEDICATION'}</div><div class="watch-med">${esc(d.medicationName)}</div><div class="watch-detail">${esc(d.dosage)}<br>${esc(d.quantity)}<br>${esc(d.mealRelation)}</div>${active ? `<div class="watch-actions"><button class="watch-taken" data-action="dose-action" data-dose="${d.id}" data-kind="taken" data-source="watch">✓ &nbsp; TAKEN</button><button class="watch-later" data-action="dose-action" data-dose="${d.id}" data-kind="later" data-source="watch">◷ &nbsp; LATER</button><button class="watch-help" data-action="dose-action" data-dose="${d.id}" data-kind="help" data-source="watch">♡ &nbsp; HELP</button></div>` : `<div class="watch-actions"><button class="watch-taken" data-action="trigger">Show reminder</button></div>`}` : '<div class="watch-kicker">ALL SET</div><div class="watch-empty">No medication is scheduled yet.</div>'}</div><div class="watch-foot">Patient-only glanceable view · Actions sync with GrandCare</div></section></div>`;
+  return `<div class="watch-overlay" data-action="close-watch"><section class="watch-panel" role="dialog" aria-label="Patient smartwatch simulator" data-watch-panel><div class="watch-top"><span>◌ PATIENT WATCH</span><button class="close-button" data-action="close-watch" aria-label="Close watch">×</button></div><div class="watch-face"><div class="watch-time">${new Intl.DateTimeFormat(localeFor(state.language), { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date())}</div><div class="watch-date">${new Intl.DateTimeFormat(localeFor(state.language), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).format(new Date())}</div>${d ? `<div class="watch-kicker">${active ? 'MEDICATION DUE' : 'NEXT MEDICATION'}</div><div class="watch-med">${esc(d.medicationName)}</div><div class="watch-detail">${esc(d.dosage)}<br>${esc(d.quantity)}<br>${esc(d.mealRelation)}</div>${active ? `<div class="watch-actions"><button class="watch-taken" data-action="dose-action" data-dose="${d.id}" data-kind="taken" data-source="watch">✓ &nbsp; TAKEN</button><button class="watch-later" data-action="dose-action" data-dose="${d.id}" data-kind="later" data-source="watch">◷ &nbsp; LATER</button><button class="watch-help" data-action="dose-action" data-dose="${d.id}" data-kind="help" data-source="watch">♡ &nbsp; HELP</button></div>` : `<div class="watch-actions"><button class="watch-taken" data-action="trigger">Show reminder</button></div>`}` : '<div class="watch-kicker">ALL SET</div><div class="watch-empty">No medication is scheduled yet.</div>'}</div><div class="watch-foot">Patient-only glanceable view · Actions sync with GrandCare</div></section></div>`;
 }
 function renderModal() {
   if (state.modal.type === 'routine') {
@@ -354,7 +370,7 @@ function renderModal() {
 }
 function render() {
   if (!state.user) return loginScreen();
-  if (!state.data) { root.innerHTML = '<main style="max-width:1100px;margin:12vh auto;padding:30px"><div class="skeleton" style="width:150px;height:24px"></div><div class="skeleton" style="height:90px;margin-top:24px"></div><div class="skeleton" style="height:250px;margin-top:18px"></div></main>'; return; }
+  if (!state.data) { root.innerHTML = '<main style="max-width:1100px;margin:12vh auto;padding:30px"><div class="skeleton" style="width:150px;height:24px"></div><div class="skeleton" style="height:90px;margin-top:24px"></div><div class="skeleton" style="height:250px;margin-top:18px"></div></main>'; applyTranslations(root, state.language); return; }
   let content;
   if (state.user.role === 'caregiver') content = ({ dashboard: caregiverDashboard, patient: patientProfilePage, medications: medicationsPage, alerts: alertsPage, reports: reportsPage, messages: messagesPage, history: historyPage })[state.page]?.() || caregiverDashboard();
   else content = ({ home: patientHome, medications: medicationsPage, prescriptions: prescriptionsPage, history: historyPage, help: helpPage })[state.page]?.() || patientHome();
@@ -370,7 +386,7 @@ async function refresh({ quiet = false } = {}) {
       if (!reminderToSpeak && state.user.role === 'patient' && dose.state === 'DUE' && old !== 'DUE') reminderToSpeak = dose;
       if (old && old !== dose.state && ['DUE','CAREGIVER_NOTIFIED','MISSED','HELP_REQUESTED'].includes(dose.state)) {
         if (!quiet) toast(dose.state === 'DUE' ? `A gentle reminder is ready for ${dose.medicationName}.` : dose.state === 'MISSED' ? `${dose.medicationName} may need a caregiver check-in.` : `Support updated for ${dose.medicationName}.`);
-        if (['UPCOMING','SNOOZED'].includes(old) && dose.state === 'DUE' && 'Notification' in window && Notification.permission === 'granted') new Notification('GrandCare · gentle reminder', { body: `${dose.medicationName} ${dose.dosage} · ${dose.quantity} · ${dose.mealRelation}. ${dose.instructions || 'Ready when you are.'}`, tag: dose.id });
+        if (['UPCOMING','SNOOZED'].includes(old) && dose.state === 'DUE' && 'Notification' in window && Notification.permission === 'granted') new Notification(translateText('GrandCare · gentle reminder', state.language), { body: translateText(`${dose.medicationName} ${dose.dosage} · ${dose.quantity} · ${dose.mealRelation}. ${dose.instructions || 'Ready when you are.'}`, state.language), tag: dose.id });
       }
       state.lastStates.set(dose.id, dose.state);
     }
@@ -379,7 +395,7 @@ async function refresh({ quiet = false } = {}) {
   } catch (error) {
     state.online = false;
     if (!quiet) toast(error.message, 'error');
-    if (!state.data) { root.innerHTML = `<main style="max-width:600px;margin:12vh auto;padding:24px;text-align:center"><div class="card panel"><div class="empty-icon">⌁</div><strong>GrandCare couldn’t connect</strong><p style="color:#71807a;font-size:12px;line-height:1.6">${esc(error.message)} Check that the local server is running, then try again.</p><button class="btn btn-primary" data-action="retry">Try again</button></div></main>`; }
+    if (!state.data) { root.innerHTML = `<main style="max-width:600px;margin:12vh auto;padding:24px;text-align:center"><div class="card panel"><div class="empty-icon">⌁</div><strong>GrandCare couldn’t connect</strong><p style="color:#71807a;font-size:12px;line-height:1.6">${esc(error.message)} Check that the local server is running, then try again.</p><button class="btn btn-primary" data-action="retry">Try again</button></div></main>`; applyTranslations(root, state.language); }
   }
 }
 function applyPending(data) {
@@ -487,7 +503,7 @@ async function sendMessage(form) {
   catch (error) { toast(error.message, 'error'); }
 }
 async function resetDemo() {
-  if (!window.confirm('Reset the demo to Ravi and Anita’s sample data? Any changes in this prototype will be replaced.')) return;
+  if (!window.confirm(translateText('Reset the demo to Ravi and Anita’s sample data? Any changes in this prototype will be replaced.', state.language))) return;
   try { await api('/api/demo/reset', { method: 'POST', body: JSON.stringify({}) }); state.activeDoseId = null; state.lastStates.clear(); toast('Demo data has been reset.'); await refresh({ quiet: true }); }
   catch (error) { toast(error.message, 'error'); }
 }
@@ -506,12 +522,14 @@ function playVoice(doseId, { automatic = false } = {}) {
   synthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   const voices = synthesis.getVoices();
-  const indianEnglish = voices.filter((voice) => /^en[-_]in$/i.test(voice.lang));
-  utterance.voice = indianEnglish.find((voice) => /natural|neural|online|google|microsoft/i.test(voice.name)) || indianEnglish[0] || voices.find((voice) => /^en[-_](gb|us)$/i.test(voice.lang)) || null;
+  const preferredLocale = speechLocaleFor(state.language);
+  const localePrefix = preferredLocale.split('-')[0].toLowerCase();
+  const localizedVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(`${localePrefix}-`));
+  utterance.voice = localizedVoices.find((voice) => /natural|neural|online|google|microsoft/i.test(voice.name)) || localizedVoices[0] || null;
   utterance.rate = 0.93;
   utterance.pitch = 1.02;
   utterance.volume = 1;
-  utterance.lang = utterance.voice?.lang || 'en-IN';
+  utterance.lang = utterance.voice?.lang || preferredLocale;
   utterance.onerror = (event) => {
     if (automatic && event.error === 'not-allowed') toast('Tap “Hear reminder again” once to allow voice reminders on this device.', 'error');
   };
@@ -570,6 +588,7 @@ document.addEventListener('submit', async (event) => {
   else if (event.target.id === 'message-form') { event.preventDefault(); await sendMessage(event.target); event.target.reset(); }
 });
 document.addEventListener('change', (event) => {
+  if (event.target.id === 'app-language') { state.language = saveLanguage(event.target.value); render(); return; }
   if (event.target.id === 'med-meal') { const recommended = mealTimeFor(event.target.value); if (recommended) { const field = document.querySelector('#scheduled-time'); if (field) field.value = recommended; } }
   if (event.target.id === 'prescription-file') { const file = event.target.files?.[0]; const name = document.querySelector('#prescription-file-name'); if (name) name.textContent = file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB` : 'No file selected'; }
 });
@@ -581,8 +600,8 @@ window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault(); state.installPrompt = event;
   const space = document.querySelector('.topbar-space');
   if (space && !document.querySelector('.install-app-button')) {
-    const button = document.createElement('button'); button.className = 'install-app-button'; button.dataset.action = 'install-app'; button.setAttribute('aria-label', 'Install GrandCare');
-    button.append(document.createTextNode('⇩ ')); const label = document.createElement('span'); label.textContent = 'Install'; button.append(label); space.after(button);
+    const button = document.createElement('button'); button.className = 'install-app-button'; button.dataset.action = 'install-app'; button.setAttribute('aria-label', translateText('Install GrandCare', state.language));
+    button.append(document.createTextNode('⇩ ')); const label = document.createElement('span'); label.textContent = translateText('Install', state.language); button.append(label); space.after(button);
   }
 });
 window.addEventListener('appinstalled', () => { state.installPrompt = null; document.querySelectorAll('.install-app-button,.install-app-cta').forEach((button) => button.remove()); });
