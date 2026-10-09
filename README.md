@@ -12,6 +12,7 @@ Remembering several medicines, their timing, and whether a dose was already conf
 
 - Separate patient and caregiver sign-ins with role-checked API access.
 - Patient home, medicines, prescriptions, history, and help views; caregiver dashboard, patient profile, medication management, support inbox, messages, and reports.
+- Patient **Lifestyle** view for setting breakfast, lunch, dinner, and sleep times. The caregiver sees the saved routine; the patient can edit only these time preferences.
 - Patient-only prescription import for digital PDFs and photos of handwritten prescriptions. Text-based PDFs are read directly; scanned PDFs and photos use locally hosted Tesseract.js OCR in the browser. The original file and extracted text are stored in the local app data folder for patient review. OCR output never changes the medication schedule.
 - Patient home shows a four-second visual guide for tablet or capsule doses when the caregiver-entered directions mention water. It switches to a still image when reduced motion is preferred; the saved directions remain the source of truth.
 - If the prescription API is unavailable, scans stay in browser IndexedDB on that device and remain available to review or remove there.
@@ -78,7 +79,7 @@ Open [http://127.0.0.1:4173](http://127.0.0.1:4173). For live reload of the serv
 | `FAST_DEMO_SECONDS` | `15` | Fast-mode snooze interval, minimum 5 seconds |
 | `CAREMATE_DATA_DIR` | `./data` | Alternate local JSON store directory |
 
-The service binds to `127.0.0.1`; it is intended for a local hackathon demo, not public deployment.
+Locally, the service binds to `127.0.0.1`. On Railway, it detects the Railway service ID and binds to `0.0.0.0`, while continuing to use the injected `PORT` value so Railway can route public traffic to the app. GrandCare is still a prototype, not a medical device.
 
 ## Install on a device
 

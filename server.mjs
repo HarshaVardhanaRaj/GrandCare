@@ -304,12 +304,17 @@ async function route(req, res) {
 
     if (req.method === 'GET' && pathname === '/api/dashboard') { const payload = dashboardFor(patientId); await persist(); return json(res, 200, payload); }
     if (req.method === 'PATCH' && pathname === '/api/patient') {
-      if (!requireRole(res, user, 'caregiver')) return;
+      const selfEditingLifestyle = user.role === 'patient';
+      if (!selfEditingLifestyle && !requireRole(res, user, 'caregiver')) return;
       const input = await body(req); const patient = store.patients.find((p) => p.id === patientId);
+      if (selfEditingLifestyle && Object.keys(input).some((key) => !['meals', 'sleepTime'].includes(key))) return fail(res, 403, 'Patients can update only their meal and sleep times.', 'forbidden');
+      if (input.meals !== undefined && (!input.meals || typeof input.meals !== 'object' || Array.isArray(input.meals))) return fail(res, 400, 'Enter valid breakfast, lunch, and dinner times.', 'invalid_routine');
       const before = `${patient.meals.breakfast}/${patient.meals.lunch}/${patient.meals.dinner}`;
       const next = { ...patient, meals: { ...patient.meals } };
-      for (const key of ['name', 'relationship', 'emergencyContact', 'phone', 'wakeTime', 'sleepTime']) if (input[key] !== undefined) next[key] = cleanText(input[key], 120);
-      if (input.age !== undefined && input.age !== '' && Number.isFinite(Number(input.age))) next.age = Math.max(1, Math.min(120, Number(input.age)));
+      if (!selfEditingLifestyle) {
+        for (const key of ['name', 'relationship', 'emergencyContact', 'phone', 'wakeTime', 'sleepTime']) if (input[key] !== undefined) next[key] = cleanText(input[key], 120);
+        if (input.age !== undefined && input.age !== '' && Number.isFinite(Number(input.age))) next.age = Math.max(1, Math.min(120, Number(input.age)));
+      } else if (input.sleepTime !== undefined) next.sleepTime = cleanText(input.sleepTime, 120);
       if (input.meals && typeof input.meals === 'object') {
         for (const key of ['breakfast', 'lunch', 'dinner']) if (input.meals[key] !== undefined) {
           if (!validTime(input.meals[key])) return fail(res, 400, 'Enter valid breakfast, lunch, and dinner times.', 'invalid_routine');
@@ -318,8 +323,9 @@ async function route(req, res) {
       }
       if (!validTime(next.wakeTime) || !validTime(next.sleepTime) || !next.name) return fail(res, 400, 'Check the patient name and daily routine times.', 'invalid_routine');
       Object.assign(patient, next);
-      const patientUser = store.users.find((u) => u.id === patient.userId); if (patientUser) patientUser.name = patient.name;
-      store.audit.unshift({ id: id('audit'), patientId, actor: user.name, at: isoNow(), description: `Daily routine updated by ${user.name}${before !== `${patient.meals.breakfast}/${patient.meals.lunch}/${patient.meals.dinner}` ? ` · meal anchors ${patient.meals.breakfast}, ${patient.meals.lunch}, ${patient.meals.dinner}` : ''}.` });
+      if (!selfEditingLifestyle) { const patientUser = store.users.find((u) => u.id === patient.userId); if (patientUser) patientUser.name = patient.name; }
+      const actor = selfEditingLifestyle ? patient.name : user.name;
+      store.audit.unshift({ id: id('audit'), patientId, actor: user.name, at: isoNow(), description: selfEditingLifestyle ? `Lifestyle times updated by ${actor}.` : `Daily routine updated by ${actor}${before !== `${patient.meals.breakfast}/${patient.meals.lunch}/${patient.meals.dinner}` ? ` · meal anchors ${patient.meals.breakfast}, ${patient.meals.lunch}, ${patient.meals.dinner}` : ''}.` });
       await persist(); return json(res, 200, { patient });
     }
     if (req.method === 'GET' && pathname === '/api/medications') return json(res, 200, { medications: store.medications.filter((m) => m.patientId === patientId) });
@@ -456,6 +462,5 @@ async function route(req, res) {
 }
 
 await loadStore();
-const server = http.createServer((req, res) => { route(req, res).catch((error) => { console.error('Request error:', error.message); if (!res.headersSent) fail(res, error.status || 500, error.status ? error.message : 'Something went wrong. Please try again.', 'server_error'); else res.end(); }); 
-});
+const server = http.createServer((req, res) => { route(req, res).catch((error) => { console.error('Request error:', error.message); if (!res.headersSent) fail(res, error.status || 500, error.status ? error.message : 'Something went wrong. Please try again.', 'server_error'); else res.end(); }); });
 server.listen(PORT, HOST, () => console.log(`GrandCare prototype listening on ${HOST}:${PORT}`));
