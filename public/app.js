@@ -50,7 +50,7 @@ function loginScreen() {
 function navItems() {
   return state.user.role === 'caregiver'
     ? [['dashboard', '⌂', 'Dashboard'], ['patient', '♙', 'Patient'], ['medications', '▤', 'Medications'], ['alerts', '♧', 'Alerts'], ['reports', '▧', 'Reports'], ['messages', '✉', 'Messages']]
-    : [['home', '⌂', 'Home'], ['medications', '▤', 'Medicines'], ['prescriptions', '▧', 'Prescriptions'], ['history', '◷', 'History'], ['help', '♡', 'Help']];
+    : [['home', '⌂', 'Home'], ['lifestyle', '☀', 'Lifestyle'], ['medications', '▤', 'Medicines'], ['prescriptions', '▧', 'Prescriptions'], ['history', '◷', 'History'], ['help', '♡', 'Help']];
 }
 function currentDateTime() {
   return new Intl.DateTimeFormat(localeFor(state.language), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })
@@ -58,7 +58,7 @@ function currentDateTime() {
 }
 function titleFor(page) {
   if (page === 'home' && state.user.role === 'patient') return currentDateTime();
-  return ({ dashboard: 'Care overview', patient: 'Patient profile', medications: state.user.role === 'patient' ? 'My medicines' : 'Medication schedule', prescriptions: 'My prescriptions', alerts: 'Support alerts', reports: 'Care reports', messages: 'Messages', home: 'My day', history: 'Medication history', help: 'Help & support' })[page] || 'Care overview';
+  return ({ dashboard: 'Care overview', patient: 'Patient profile', medications: state.user.role === 'patient' ? 'My medicines' : 'Medication schedule', prescriptions: 'My prescriptions', alerts: 'Support alerts', reports: 'Care reports', messages: 'Messages', home: 'My day', lifestyle: 'My lifestyle', history: 'Medication history', help: 'Help & support' })[page] || 'Care overview';
 }
 function badge(stateName) {
   const map = { TAKEN: ['Confirmed', 'good'], DELAYED: ['Taken · delayed', 'pending'], MISSED: ['Needs attention', 'alert'], DUE: ['Due now', 'pending'], UPCOMING: ['Upcoming', 'info'], SNOOZED: ['Remind me later', 'pending'], CAREGIVER_NOTIFIED: ['Caregiver notified', 'alert'], HELP_REQUESTED: ['Help requested', 'alert'], RESOLVED: ['Resolved', 'good'] };
@@ -317,6 +317,10 @@ function patientHome() {
   const medicine = current ? `<section class="card patient-due-card"><div class="patient-due-head"><small>${actionable ? 'Medicine time' : 'Next medicine'}</small></div><h2>${esc(current.medicationName)}</h2><div class="patient-dose-line">${esc(current.dosage)} · ${esc(current.quantity)}</div><div class="patient-time-line">${time(current.scheduledTime)} · ${esc(current.mealRelation)}</div>${current.instructions ? `<div class="instruction-box"><strong>Instructions</strong><p>${esc(current.instructions)}</p></div>` : ''}${actionable ? `${doseActions}${guide}` : `${guide}${doseActions}`}</section>` : `<section class="card patient-due-card patient-all-done"><div class="patient-due-head"><small>Today</small></div><h2>${d.today.length ? 'You’re all set' : state.data.medications.length ? 'No more medicines today' : 'No schedule yet'}</h2><button class="btn btn-secondary" data-action="navigate" data-page="medications">See all medicines</button></section>`;
   return `<div class="patient-layout"><div class="page-heading patient-welcome"><div><h1>${greeting()}, ${esc(firstName)}</h1></div><button class="patient-watch-demo" data-action="toggle-watch"><span aria-hidden="true">⌚</span> Smartwatch Reminder</button></div>${medicine}<section class="card patient-support"><h2>Need help?</h2><div class="patient-support-actions"><button class="btn btn-secondary" data-action="patient-help">Ask Anita</button><a class="btn btn-secondary" href="tel:${esc(d.patient.phone)}">☎ &nbsp; Call Anita</a></div></section></div>`;
 }
+function lifestylePage() {
+  const patient = state.data.patient;
+  return `<div class="patient-layout"><div class="page-heading"><div><h1>My lifestyle</h1><p>Set your usual times for meals and sleep.</p></div></div><section class="card panel patient-lifestyle-card"><form id="lifestyle-form"><div class="lifestyle-fields"><label class="lifestyle-field" for="lifestyle-breakfast"><span>☀ &nbsp; Breakfast time</span><input id="lifestyle-breakfast" name="breakfast" type="time" value="${esc(patient.meals.breakfast)}" required></label><label class="lifestyle-field" for="lifestyle-lunch"><span>◒ &nbsp; Lunch time</span><input id="lifestyle-lunch" name="lunch" type="time" value="${esc(patient.meals.lunch)}" required></label><label class="lifestyle-field" for="lifestyle-dinner"><span>☾ &nbsp; Dinner time</span><input id="lifestyle-dinner" name="dinner" type="time" value="${esc(patient.meals.dinner)}" required></label><label class="lifestyle-field" for="lifestyle-sleep"><span>♡ &nbsp; Sleep time</span><input id="lifestyle-sleep" name="sleepTime" type="time" value="${esc(patient.sleepTime)}" required></label></div><p class="lifestyle-note">Your times help GrandCare fit your daily routine. Medicine instructions stay as prescribed.</p><button class="btn btn-primary lifestyle-save" type="submit">Save my times</button></form></section></div>`;
+}
 function patientProfilePage() {
   const p = state.data.patient;
   return `<div class="page-heading"><div><div class="eyebrow">Connected care circle</div><h1>${esc(p.name)}’s profile</h1><p>Routine preferences and support details.</p></div><div class="heading-actions"><button class="btn btn-secondary" data-action="edit-routine">Edit routine</button><button class="btn btn-secondary" data-action="navigate" data-page="messages">✉ Message Ravi</button></div></div><section class="card panel" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:14px"><div class="avatar large">${initials(p.name)}</div><div><h2 style="font:700 17px Manrope;margin:0 0 4px">${esc(p.name)}</h2><span style="color:#7a8780;font-size:11px">Age ${p.age} · ${esc(p.relationship)} · ${esc(p.phone)}</span></div><span class="connection" style="margin-left:auto"><i></i>Connected</span></div></section><div class="dashboard-grid"><section class="card panel"><div class="panel-title-row"><div><h2>Daily anchors</h2><p>Meal times help contextualize caregiver-entered reminders.</p></div></div><div class="meal-list"><div class="meal-row"><span class="meal-icon">☀</span>Breakfast <span>${time(p.meals.breakfast)}</span></div><div class="meal-row"><span class="meal-icon">◒</span>Lunch <span>${time(p.meals.lunch)}</span></div><div class="meal-row"><span class="meal-icon">☾</span>Dinner <span>${time(p.meals.dinner)}</span></div><div class="meal-row"><span class="meal-icon">◷</span>Wake time <span>${time(p.wakeTime)}</span></div><div class="meal-row"><span class="meal-icon">☾</span>Rest time <span>${time(p.sleepTime)}</span></div></div></section><section class="card panel"><div class="panel-title-row"><div><h2>Support contact</h2></div></div><p style="font-size:11px;color:#64746c">${esc(p.emergencyContact)}</p><a class="btn btn-secondary" href="tel:${esc(p.phone)}">Call patient ↗</a></section></div>${demoPanel()}`;
@@ -373,7 +377,7 @@ function render() {
   if (!state.data) { root.innerHTML = '<main style="max-width:1100px;margin:12vh auto;padding:30px"><div class="skeleton" style="width:150px;height:24px"></div><div class="skeleton" style="height:90px;margin-top:24px"></div><div class="skeleton" style="height:250px;margin-top:18px"></div></main>'; applyTranslations(root, state.language); return; }
   let content;
   if (state.user.role === 'caregiver') content = ({ dashboard: caregiverDashboard, patient: patientProfilePage, medications: medicationsPage, alerts: alertsPage, reports: reportsPage, messages: messagesPage, history: historyPage })[state.page]?.() || caregiverDashboard();
-  else content = ({ home: patientHome, medications: medicationsPage, prescriptions: prescriptionsPage, history: historyPage, help: helpPage })[state.page]?.() || patientHome();
+  else content = ({ home: patientHome, lifestyle: lifestylePage, medications: medicationsPage, prescriptions: prescriptionsPage, history: historyPage, help: helpPage })[state.page]?.() || patientHome();
   shell(content);
 }
 async function refresh({ quiet = false } = {}) {
@@ -497,6 +501,19 @@ async function submitRoutine(form) {
   try { await api('/api/patient', { method: 'PATCH', body: JSON.stringify(body) }); state.modal = null; toast('Patient routine updated.'); await refresh({ quiet: true }); }
   catch (error) { toast(error.message, 'error'); }
 }
+async function submitLifestyle(form) {
+  const saveButton = form.querySelector('button[type="submit"]');
+  saveButton.disabled = true;
+  try {
+    const result = await api('/api/patient', { method: 'PATCH', body: JSON.stringify({ meals: { breakfast: form.elements.breakfast.value, lunch: form.elements.lunch.value, dinner: form.elements.dinner.value }, sleepTime: form.elements.sleepTime.value }) });
+    state.data.patient = result.patient;
+    render();
+    toast('Lifestyle times saved.');
+  } catch (error) {
+    toast(error.message, 'error');
+    saveButton.disabled = false;
+  }
+}
 async function sendMessage(form) {
   const data = Object.fromEntries(new FormData(form).entries());
   try { await api('/api/messages', { method: 'POST', body: JSON.stringify(data) }); toast('Message sent.'); await refresh({ quiet: true }); }
@@ -585,6 +602,7 @@ document.addEventListener('submit', async (event) => {
   else if (event.target.id === 'prescription-form') { event.preventDefault(); await submitPrescription(event.target); }
   else if (event.target.id === 'med-form') { event.preventDefault(); await submitMedication(event.target); }
   else if (event.target.id === 'routine-form') { event.preventDefault(); await submitRoutine(event.target); }
+  else if (event.target.id === 'lifestyle-form') { event.preventDefault(); await submitLifestyle(event.target); }
   else if (event.target.id === 'message-form') { event.preventDefault(); await sendMessage(event.target); event.target.reset(); }
 });
 document.addEventListener('change', (event) => {
