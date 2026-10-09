@@ -9,6 +9,7 @@ const PUBLIC = path.join(ROOT, 'public');
 const DATA_DIR = process.env.CAREMATE_DATA_DIR ? path.resolve(process.env.CAREMATE_DATA_DIR) : path.join(ROOT, 'data');
 const STORE_PATH = path.join(DATA_DIR, 'store.json');
 const PORT = Number(process.env.PORT || 4173);
+const HOST = process.env.RAILWAY_SERVICE_ID ? '0.0.0.0' : '127.0.0.1';
 const FAST_DEMO_SECONDS = Math.max(5, Number(process.env.FAST_DEMO_SECONDS || 15));
 const SNOOZE_MINUTES = 15;
 const SESSIONS = new Map();
@@ -455,5 +456,6 @@ async function route(req, res) {
 }
 
 await loadStore();
-const server = http.createServer((req, res) => { route(req, res).catch((error) => { console.error('Request error:', error.message); if (!res.headersSent) fail(res, error.status || 500, error.status ? error.message : 'Something went wrong. Please try again.', 'server_error'); else res.end(); }); });
-server.listen(PORT, '127.0.0.1', () => console.log(`GrandCare prototype running at http://127.0.0.1:${PORT}`));
+const server = http.createServer((req, res) => { route(req, res).catch((error) => { console.error('Request error:', error.message); if (!res.headersSent) fail(res, error.status || 500, error.status ? error.message : 'Something went wrong. Please try again.', 'server_error'); else res.end(); }); 
+});
+server.listen(PORT, HOST, () => console.log(`GrandCare prototype listening on ${HOST}:${PORT}`));
